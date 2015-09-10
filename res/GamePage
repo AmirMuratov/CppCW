@@ -1,0 +1,66 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+<title>TicTacToe</title>
+<link rel="shortcut icon" href="favicon.ico"/>
+<style>
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 0px;
+    text-align: center;
+    width: 25px;
+    height: 25px;
+}
+table#t01 {
+    width: 400px;
+    background-color: #c1f1f1;
+    font-family: 'Courier';
+}
+</style>
+</head>
+<script type="text/javascript" src="jquery.js"></script>  
+<body>
+
+<h1>TicTacToe!</h1>
+
+<div id="content"></div>
+
+<script language="JavaScript">  
+        function show() {  
+            $.ajax({  
+                url: "/field",  
+                cache: false,  
+                success: function(html){  
+                    $("#content").html(html);
+                }  
+            });  
+        }  
+      
+        $(document).ready(function(event){  
+            show();  
+            setInterval('show()', 1000);  
+        });
+</script>  
+
+<script language="JavaScript">
+  addEventListener("click", function() {
+    console.log(event.pageX + "  " + event.pageY);
+    var xx = Math.floor((event.pageX - 9) / 26);
+    var yy = Math.floor((event.pageY - 118) / 26);
+    $.post("/makemove",
+        {
+            X: xx,
+            Y: yy
+        },
+        function(data, status){
+            console.log("Data: " + data + "\nStatus: " + status);
+            show();
+        });
+    });
+</script>
+
+</body>
+</html>

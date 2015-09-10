@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/html">
+        <file>favicon.ico</file>
+        <file>jquery.js</file>
+        <file>WaitPage</file>
+        <file>MainPage</file>
+        <file>GamePage</file>
+    </qresource>
+</RCC>

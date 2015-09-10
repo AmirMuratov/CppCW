@@ -1,0 +1,22 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+<title>TicTacToe</title>
+<link rel="shortcut icon" href="favicon.ico"/>
+</head>
+<script type="text/javascript" src="jquery.js"></script>  
+<body>
+
+<script language="JavaScript">    
+        $(document).ready(function(){  
+		setTimeout(function(){
+    			location.replace("/gamepage");
+		}, 1000)
+        });
+</script>  
+
+<h1>TicTacToe!</h1>
+<h2>Waiting for opponent....</h2>
+
+</body>
+</html>
