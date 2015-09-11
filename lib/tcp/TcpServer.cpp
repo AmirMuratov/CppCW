@@ -2,158 +2,173 @@
 #include <sys/eventfd.h>
 #include "fcntl.h"
 
+
+
+#define MAX_CONNECTIONS 50
+#define QUEUE_SIZE 10
+#define MAX_EVENTS 50
+#define BUFFER_SIZE 10
+
 TcpServer::TcpServer(std::function<void(const TcpSocket&)> callBack) {
-    newData = callBack;
-    listening = false;
+    dataAvailable = callBack;
+    running = false;
 }
 
 
-void TcpServer::start(uint16_t port) {
-    listening = true;
-    if (createEpollFd() == -1) {
-        stop();
+static int createAndBind (int port) {
+    struct addrinfo hints;
+    struct addrinfo *result, *rp;
+    int s, sfd;
+
+    memset(&hints, 0, sizeof (struct addrinfo));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
+
+    std::string portstr = std::to_string(port);
+    s = getaddrinfo (NULL, portstr.c_str(), &hints, &result);
+    if (s != 0) {
+        return -1;
+    }
+
+    for (rp = result; rp != NULL; rp = rp->ai_next) {
+        sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if (sfd == -1)
+            continue;
+        s = bind (sfd, rp->ai_addr, rp->ai_addrlen);
+        if (s == 0) {
+            // We managed to bind successfully!
+            break;
+        }
+        close (sfd);
+    }
+
+    if (rp == NULL) {
+        // No address succeeded
+        return -1;
+    }
+    freeaddrinfo (result);
+
+    return sfd;
+}
+
+static int makeSocketNonBlocking(int fd) {
+    int flags;
+    flags = fcntl (fd, F_GETFL, 0);
+    if (flags == -1) {
+        return -1;
+    }
+    flags |= O_NONBLOCK;
+    if (fcntl (fd, F_SETFL, flags) == -1) {
+        return -1;
+    }
+    return 0;
+}
+
+void TcpServer::start(int port) {
+    int tcpfd;
+    int epoll_fd;
+    struct epoll_event event;
+
+    tcpfd = createAndBind(port);
+    if (tcpfd == -1) {
+        printf("can't create or bind socket\n");
         return;
     }
-    if (setUpListenSocket(port) == -1) {
-        stop();
+    if (makeSocketNonBlocking(tcpfd) == -1) {
+        printf("can't make socket nonblocking\n");
         return;
     }
-    epollLoop();
+
+    if (listen(tcpfd, QUEUE_SIZE) == -1) {
+        perror ("listen error\n");
+        return;
+    }
+
+    epoll_fd = epoll_create1(0);
+    if (epoll_fd == -1) {
+        printf("cant create epoll instance\n");
+        return;
+    }
+
+    //add tcpfd to epoll
+    memset(&event, 0, sizeof(event));
+    event.data.fd = tcpfd;
+    event.events = EPOLLIN | EPOLLET;
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, tcpfd, &event) == -1) {
+        printf("epoll_ctl error\n");
+        return;
+    }
+
+    struct epoll_event events[MAX_EVENTS];
+
+    running = true;
+    while (1) {
+        int n;
+        n = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+        if (!running) {
+            break;
+        }
+        for (int i = 0; i < n; i++) {
+            if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP)) {
+                if (events[i].data.fd == tcpfd) {
+                    printf("error in Tcpsocket\n");
+                    return;
+                }
+                if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1) {
+                    printf("epoll_ctl error\n");
+                    return;
+                }
+                close(events[i].data.fd);
+            } else if (events[i].data.fd == tcpfd) {
+                //new connection
+                while (1) {
+                    struct sockaddr in_addr;
+                    socklen_t in_len;
+                    int infd;
+                    char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+
+                    in_len = sizeof in_addr;
+                    infd = accept(tcpfd, &in_addr, &in_len);
+                    if (infd == -1) {
+                        if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
+                            // We have processed all incomin connections.
+                            break;
+                        } else {
+                            printf("accept error\n");
+                            break;
+                        }
+                    }
+
+                    //useless part
+                    int s = getnameinfo(&in_addr, in_len, hbuf, sizeof(hbuf), sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV);
+                    if (s == 0) {
+                        printf("Accepted connection on descriptor %d "
+                            "(host=%s, port=%s)\n", infd, hbuf, sbuf);
+                    }
+                    //
+
+                    // Make the incoming socket non-blocking and add it to the epoll.
+                    if (makeSocketNonBlocking(infd) == -1) {
+                        printf("can't make socket nonblocking");
+                        return;
+                    }
+                    event.data.fd = infd;
+                    event.events = EPOLLIN | EPOLLET;
+                    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, infd, &event) == -1) {
+                        printf("epoll_ctl error");
+                        return;
+                    }
+                }
+            } else{
+                //have some data to read
+                dataAvailable(events[i].data.fd);
+            }
+        }
+    }
+    close(tcpfd);
 }
 
 void TcpServer::stop() {
-    listening = false;
+    running = false;
 }
-
-int TcpServer::createEpollFd() {
-    epfd = epoll_create(MAX_CONNECTION);
-    if (epfd == -1) {
-        printf("epoll_create failed.%s\n", strerror(errno));
-        return -1;
-    }
-    return 0;
-}
-
-int TcpServer::bindSocket(int socket, uint16_t port) {
-    sockaddr_in serv;
-    bzero(&serv,sizeof(serv));
-    serv.sin_family = AF_INET;
-    serv.sin_addr.s_addr = htonl(INADDR_ANY);
-    serv.sin_port = htons(port);
-    if (bind(socket, (struct sockaddr*) &serv, sizeof(serv)) == -1) {
-        printf("bind failed.%s\n", strerror(errno));
-        return -1;
-    }
-    return 0;
-}
-
-int TcpServer::setUpListenSocket(uint16_t port) {
-    listen_socket = socket(AF_INET, SOCK_STREAM, 0);
-    int hern = 1;
-    if (setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &hern, sizeof(hern)) == -1) {
-        printf("setsockopt failed.%s\n", strerror(errno));
-        return -1;
-    }
-    if (listen_socket == -1) {
-        printf("socket creation failed.%s\n", strerror(errno));
-        return -1;
-    }
-    if (bindSocket(listen_socket, port) == -1) {
-        printf("can't bind listen_socket socket");
-        return -1;
-    }
-    if (listen(listen_socket, MAX_EVENTS) == -1) {
-        printf("listen failed.%s\n", strerror(errno));
-        return -1;
-    }
-    if (addSocket(listen_socket) == -1) {
-        printf("adding listen_socket to epfd failed.\n");
-        return -1;
-    }
-    return 0;
-}
-
-int TcpServer::addSocket(int socket) {
-    epoll_event event;
-    bzero(&event, sizeof(event));
-    event.events = EPOLLIN | EPOLLET;
-    event.data.fd = socket;
-    if (epoll_ctl(epfd, EPOLL_CTL_ADD, socket, &event) == -1) {
-        printf("epoll_ctl failed. %s\n", strerror(errno));
-        return -1;
-    }
-    return 0;
-}
-
-int TcpServer::makeNonBlocking(int socket) {
-    int flags = fcntl(socket, F_GETFL, 0);
-    if (flags == -1) {
-        printf("can't get flags. %s\n", strerror(errno));
-        return -1;
-    }
-    if (fcntl(socket, F_SETFL, flags | O_NONBLOCK) == -1) {
-        printf("can't set flags. %s\n", strerror(errno));
-        return -1;
-    }
-    return 0;
-}
-
-
-int TcpServer::acceptNewConnection() {
-    sockaddr_in connection;
-    int addrlen = sizeof(connection);
-    int connection_socket = accept(listen_socket, (sockaddr*) &connection, (socklen_t*) &addrlen);
-    if (connection_socket == -1) {
-        printf("accept failed.%s\n", strerror(errno));
-        return -1;
-    }  else if (makeNonBlocking(connection_socket) == -1) {
-        printf("can't make new connection non blocking");
-        return -1;
-    } else if (addSocket(connection_socket) == -1) {
-        printf("adding new connection to epfd failed.\n");
-        return -1;
-    }
-    return 0;
-}
-
-void TcpServer::epollLoop() {
-    epoll_event events[MAX_EVENTS];
-    int accepted = 0;
-    while (listening) {
-        int nfds = epoll_wait(epfd, events, MAX_EVENTS, EPOLL_RUN_TIMEOUT);
-        if (nfds < 0) {
-            if (errno != EINTR) {
-                printf("epoll_wait error %s\n", strerror(errno));
-                stop();
-                return;
-            }
-        }
-        //std::cout << accepted << std::endl;
-        for (int i = 0; i < nfds && listening; i++) {
-            if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP)) {
-                if (events[i].data.fd == listen_socket) {
-                    printf("error in tcpsocket");
-                    return;
-                }
-                if (epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1) {
-                    printf("epoll_ctl error");
-                    return;
-                }
-
-                close(events[i].data.fd);
-                accepted--;
-                stop();
-            } else if (events[i].data.fd == listen_socket) {
-                if (acceptNewConnection() == -1) {
-                    printf("can't accept new connection");
-                    stop();
-                }
-                accepted++;
-            } else {
-                TcpSocket socket(events[i].data.fd);
-                 TcpServer::newData(socket);
-             }
-        }
-    }
-}
-

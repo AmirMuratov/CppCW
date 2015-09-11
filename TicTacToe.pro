@@ -25,7 +25,8 @@ SOURCES += main.cpp \
     lib/http/HttpSocket.cpp \
     lib/http/HttpResponse.cpp \
     Game.cpp \
-    TicTacToe.cpp
+    TicTacToe.cpp \
+    lib/tcp/Raiisocket.cpp
 
 HEADERS += \
     lib/http/HttpServer.h \
@@ -35,7 +36,8 @@ HEADERS += \
     lib/http/HttpSocket.h \
     lib/http/HttpResponse.h \
     Game.h \
-    TicTacToe.h
+    TicTacToe.h \
+    lib/tcp/Raiisocket.h
 
 RESOURCES += \
     res/Resources.qrc

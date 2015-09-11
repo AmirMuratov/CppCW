@@ -93,7 +93,7 @@ QString getName(HttpRequest& request) {
     if (cookies.mid(0, 5) != "name=" || p == -1) {
         return nullptr;
     }
-    return cookies.mid(5, p - 7);
+    return cookies.mid(5, p - 6);
 }
 
 QString getPass(HttpRequest& request) {
