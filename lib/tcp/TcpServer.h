@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <sys/epoll.h>
 #include <errno.h>
+#include <memory>
 #include "TcpSocket.h"
 
 

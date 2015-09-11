@@ -1,4 +1,5 @@
 #include "TcpServer.h"
+#include "Raiisocket.h"
 #include <sys/eventfd.h>
 #include "fcntl.h"
 
@@ -9,6 +10,8 @@
 #define MAX_EVENTS 50
 #define BUFFER_SIZE 10
 
+//#define sptr(T) std::shared_ptr<T>
+
 TcpServer::TcpServer(std::function<void(const TcpSocket&)> callBack) {
     dataAvailable = callBack;
     running = false;
@@ -18,7 +21,8 @@ TcpServer::TcpServer(std::function<void(const TcpSocket&)> callBack) {
 static int createAndBind (int port) {
     struct addrinfo hints;
     struct addrinfo *result, *rp;
-    int s, sfd;
+    int s;
+    int sfd;
 
     memset(&hints, 0, sizeof (struct addrinfo));
     hints.ai_family = AF_UNSPEC;
@@ -35,6 +39,10 @@ static int createAndBind (int port) {
         sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if (sfd == -1)
             continue;
+        if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &s, sizeof(s)) == -1) {
+            printf("can't make socket reusable\n", strerror(errno));
+            continue;
+        }
         s = bind (sfd, rp->ai_addr, rp->ai_addrlen);
         if (s == 0) {
             // We managed to bind successfully!
@@ -166,7 +174,6 @@ void TcpServer::start(int port) {
             }
         }
     }
-    close(tcpfd);
 }
 
 void TcpServer::stop() {

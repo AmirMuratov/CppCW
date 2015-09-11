@@ -13,12 +13,12 @@ class HttpServer {
     TcpServer tcpServer;
 
 public:
-    //HttpServer(std::function<void(HttpRequest&, HttpSocket&)> callBack);
-    HttpServer(void (*callBack)(HttpRequest&, HttpSocket&));
+    HttpServer(std::function<void(HttpRequest&, HttpSocket&)> callBack);
     ~HttpServer();
     void start(u_int16_t port);
     void stop();
-    //void (*callBack2)(HttpRequest& http_request, HttpSocket& socket);
 };
+
+void newRequest(std::function<void(HttpRequest&, HttpSocket&)> callBack, const TcpSocket& s);
 
 #endif // HTTPSERVER_H
