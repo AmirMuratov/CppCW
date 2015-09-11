@@ -8,7 +8,6 @@ void newRequest(const TcpSocket& s) {
     s.read(str);
     HttpSocket http_s(s);
     HttpRequest req(QString::fromStdString(str));
-    printf("HERE");
     f(req, http_s);
     //callBack2(req, http_s);
 }
@@ -18,7 +17,7 @@ void newRequest(const TcpSocket& s) {
 }*/
 
 HttpServer::HttpServer(void (*callBack)(HttpRequest&, HttpSocket&)): tcpServer(newRequest) {
-    f =callBack;
+    f = callBack;
 }
 
 

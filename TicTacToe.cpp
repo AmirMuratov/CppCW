@@ -58,7 +58,7 @@ QString makeField(Game * g) {
         for (int j = 0; j < FIELD_SIZE; j++) {
             result.append("<td>");
             if (g->field[i][j] == 0) {
-                result.append(" ");
+                result.append("&nbsp;");
             } else if (g->field[i][j] == 1) {
                 result.append("X");
             } else result.append("O");
@@ -93,7 +93,7 @@ QString getName(HttpRequest& request) {
     if (cookies.mid(0, 5) != "name=" || p == -1) {
         return nullptr;
     }
-    return cookies.mid(5, p - 6);
+    return cookies.mid(5, p - 7);
 }
 
 QString getPass(HttpRequest& request) {
@@ -193,8 +193,9 @@ void makeMove(HttpRequest& http_request, HttpSocket& socket) {
 
 void sendField(HttpRequest& http_request, HttpSocket& socket) {
     QString name = getName(http_request);
-    if (name == nullptr) {
+    if (name == nullptr || activePlayers.count(name) == 0) {
         sendText(socket, "ERROR");
+        return;
     }
     int num = activePlayers.value(name);
     QString response = makeField(&games[num]);
@@ -212,6 +213,7 @@ void request(HttpRequest& http_request, HttpSocket& socket) {
         if (http_request.uri == "/gamepage") gamepageRequest(http_request, socket);
         if (http_request.uri == "/makemove") makeMove(http_request, socket);
         if (http_request.uri.mid(0, 6) == "/field") sendField(http_request, socket);
+        socket.write(HttpResponse(404, "TicTacToe", "text/html", 0, ""));
     }
     socket.close();
 }

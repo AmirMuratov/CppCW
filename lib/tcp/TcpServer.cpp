@@ -151,10 +151,8 @@ void TcpServer::epollLoop() {
                 accepted++;
             } else {
                 TcpSocket socket(events[i].data.fd);
-                printf("here2");
-                TcpServer::newData(socket);
-                printf("here2");
-            }
+                 TcpServer::newData(socket);
+             }
         }
     }
 }

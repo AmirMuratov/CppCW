@@ -16,7 +16,7 @@ th, td {
 }
 table#t01 {
     width: 400px;
-    background-color: #c1f1f1;
+    background-color: #CCFF99;
     font-family: 'Courier';
 }
 </style>
@@ -48,7 +48,7 @@ table#t01 {
 <script language="JavaScript">
   addEventListener("click", function() {
     console.log(event.pageX + "  " + event.pageY);
-    var xx = Math.floor((event.pageX - 9) / 26);
+    var xx = Math.floor((event.pageX - 9) / 25);
     var yy = Math.floor((event.pageY - 118) / 26);
     $.post("/makemove",
         {

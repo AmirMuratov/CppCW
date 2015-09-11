@@ -16,9 +16,9 @@ int main() {
     act.sa_sigaction = &handler;
     act.sa_flags = SA_SIGINFO;
     if (sigaction(SIGHUP, &act, NULL) < 0 ||
-            sigaction(SIGINT, &act, NULL) < 0 ||
-            sigaction(SIGQUIT, &act, NULL) < 0 ||
-            sigaction(SIGTERM, &act, NULL) < 0) {
+        sigaction(SIGINT, &act, NULL) < 0 ||
+        sigaction(SIGQUIT, &act, NULL) < 0 ||
+        sigaction(SIGTERM, &act, NULL) < 0) {
         perror ("sigaction");
         return 1;
     }
