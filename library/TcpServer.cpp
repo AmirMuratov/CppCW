@@ -1,5 +1,4 @@
 #include "TcpServer.h"
-#include "Raiisocket.h"
 #include <sys/eventfd.h>
 #include "fcntl.h"
 
@@ -25,7 +24,7 @@ static int createAndBind (int port) {
     int sfd;
 
     memset(&hints, 0, sizeof (struct addrinfo));
-    hints.ai_family = AF_UNSPEC;
+    hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
@@ -39,12 +38,12 @@ static int createAndBind (int port) {
         sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if (sfd == -1)
             continue;
-        if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &s, sizeof(s)) == -1) {
-            printf("can't make socket reusable\n", strerror(errno));
+        int t = 1;
+        if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &t, sizeof(t)) == -1) {
+            printf("can't make socket reusable\n");
             continue;
         }
-        s = bind (sfd, rp->ai_addr, rp->ai_addrlen);
-        if (s == 0) {
+        if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0) {
             // We managed to bind successfully!
             break;
         }
@@ -127,20 +126,18 @@ void TcpServer::start(int port) {
                     printf("epoll_ctl error\n");
                     return;
                 }
-                close(events[i].data.fd);
             } else if (events[i].data.fd == tcpfd) {
                 //new connection
                 while (1) {
                     struct sockaddr in_addr;
                     socklen_t in_len;
                     int infd;
-                    char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 
                     in_len = sizeof in_addr;
                     infd = accept(tcpfd, &in_addr, &in_len);
                     if (infd == -1) {
                         if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
-                            // We have processed all incomin connections.
+                            // We have processed all incoming connections.
                             break;
                         } else {
                             printf("accept error\n");
@@ -148,13 +145,14 @@ void TcpServer::start(int port) {
                         }
                     }
 
-                    //useless part
+                    /*
+                    char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
                     int s = getnameinfo(&in_addr, in_len, hbuf, sizeof(hbuf), sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV);
                     if (s == 0) {
                         printf("Accepted connection on descriptor %d "
                             "(host=%s, port=%s)\n", infd, hbuf, sbuf);
                     }
-                    //
+                    */
 
                     // Make the incoming socket non-blocking and add it to the epoll.
                     if (makeSocketNonBlocking(infd) == -1) {
@@ -170,7 +168,7 @@ void TcpServer::start(int port) {
                 }
             } else{
                 //have some data to read
-                dataAvailable(events[i].data.fd);
+                dataAvailable(TcpSocket(events[i].data.fd));
             }
         }
     }

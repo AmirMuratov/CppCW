@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <string.h>
 #include <iostream>
+#include <fcntl.h>
 
 class TcpSocket {
 private:

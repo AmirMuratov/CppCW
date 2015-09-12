@@ -203,9 +203,11 @@ void sendField(HttpRequest& http_request, HttpSocket& socket) {
 }
 
 void request(HttpRequest& http_request, HttpSocket& socket) {
+    std::cout << "start proceeding" << std::endl;
     if (http_request.isValid() == 0) {
         socket.write(HttpResponse(400, "TicTacToe", "text/html", 0, ""));
     } else {
+        std::cout << "start 2proceeding" << std::endl;
         std::cout << http_request.uri.toStdString() << std::endl;
         if (http_request.uri == "/favicon.ico") sendIcon(socket);
         if (http_request.uri == "/jquery.js") sendJquery(socket);
@@ -213,9 +215,9 @@ void request(HttpRequest& http_request, HttpSocket& socket) {
         if (http_request.uri == "/gamepage") gamepageRequest(http_request, socket);
         if (http_request.uri == "/makemove") makeMove(http_request, socket);
         if (http_request.uri.mid(0, 6) == "/field") sendField(http_request, socket);
-        socket.write(HttpResponse(404, "TicTacToe", "text/html", 0, ""));
     }
     socket.close();
+    std::cout << "finish proceeding" << std::endl;
 }
 
 

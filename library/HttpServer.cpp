@@ -20,5 +20,3 @@ void HttpServer::stop() {
     tcpServer.stop();
 }
 
-HttpServer::~HttpServer() {
-}

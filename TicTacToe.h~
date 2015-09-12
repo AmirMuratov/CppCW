@@ -1,10 +1,10 @@
 #ifndef TICTACTOE_H
 #define TICTACTOE_H
 
-#include "library/HttpResponse.h"
-#include "library/HttpRequest.h"
-#include "library/HttpSocket.h"
-#include "library/HttpServer.h"
+#include "http&tcp/HttpResponse.h"
+#include "http&tcp/HttpRequest.h"
+#include "http&tcp/HttpSocket.h"
+#include "http&tcp/HttpServer.h"
 #include "Game.h"
 #include <QObject>
 #include <QFile>

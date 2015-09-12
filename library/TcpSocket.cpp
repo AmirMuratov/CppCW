@@ -40,6 +40,7 @@ int TcpSocket::read(std::string& string) const {
 }
 
 int TcpSocket::write(const char * data, size_t size) const {
+    std::cout << "tcp writing" << std::endl;
     if (fd > -1) {
         int count;
         unsigned int shift = 0;

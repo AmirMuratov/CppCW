@@ -1,7 +1,7 @@
 #ifndef HTTPSOCKET_H
 #define HTTPSOCKET_H
 
-#include "lib/tcp/TcpSocket.h"
+#include "TcpSocket.h"
 #include "HttpRequest.h"
 #include "HttpResponse.h"
 #include <QString>

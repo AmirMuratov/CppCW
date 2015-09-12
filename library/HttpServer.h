@@ -6,7 +6,7 @@
 #include "HttpResponse.h"
 #include "HttpSocket.h"
 #include "HttpRequest.h"
-#include "lib/tcp/TcpServer.h"
+#include "TcpServer.h"
 #include <QTextStream>
 
 class HttpServer {
@@ -14,7 +14,6 @@ class HttpServer {
 
 public:
     HttpServer(std::function<void(HttpRequest&, HttpSocket&)> callBack);
-    ~HttpServer();
     void start(u_int16_t port);
     void stop();
 };
