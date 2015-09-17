@@ -9,7 +9,6 @@ void HttpSocket::close() {
 }
 
 void HttpSocket::write(const HttpResponse& response) const {
-    std::cout << "writing" << std::endl;
     tcp_socket.write(response.header.toStdString().data(), response.header.toStdString().size());
     tcp_socket.write(response.getContent(), response.getContentSize());
 

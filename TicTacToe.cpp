@@ -1,11 +1,17 @@
 #include "TicTacToe.h"
 #include "Game.h"
 
-TicTacToe::TicTacToe(): httpServer(request) {}
+TicTacToe::TicTacToe() {
+}
 
-void TicTacToe::start(uint16_t port) {
-    printf("Starting TicTacToe on port %i\n", port);
-    httpServer.start(port);
+void TicTacToe::addPort(int port) {
+    httpServer.addPort(port, request);
+    std::cout << "Port " << port << " added." << std::endl;
+}
+
+void TicTacToe::start() {
+    std::cout << "Starting server." << std::endl;
+    httpServer.start();
 }
 
 void TicTacToe::stop() {
@@ -216,7 +222,6 @@ void request(HttpRequest& http_request, HttpSocket& socket) {
         if (http_request.uri == "/makemove") makeMove(http_request, socket);
         if (http_request.uri.mid(0, 6) == "/field") sendField(http_request, socket);
     }
-    socket.close();
     std::cout << "finish proceeding" << std::endl;
 }
 

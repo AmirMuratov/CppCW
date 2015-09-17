@@ -21,7 +21,8 @@ private:
 
 public:
     TicTacToe();
-    void start(uint16_t port);
+    void addPort(int);
+    void start();
     void stop();
 };
 void request(HttpRequest& http_request, HttpSocket& socket);

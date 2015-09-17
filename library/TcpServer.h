@@ -1,27 +1,33 @@
 #ifndef TCPSERVER_H
 #define TCPSERVER_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <functional>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/epoll.h>
-#include <errno.h>
-#include <memory>
-#include "TcpSocket.h"
+#include "FdWrap.h"
+#include "EpollWrap.h"
 
+//typedef std::shared_ptr<FDWrap> fdptr;
 
 class TcpServer {
-     std::function<void(const TcpSocket&)> dataAvailable;
-     bool running;
+
+    EpollWrap epoll;
+    static int makeSocketNonBlocking(int);
+    static int createAndBind(int);//gets port, returns fd
+    static void connectionHandler(EpollWrap*, std::function<void(int)>, int, __uint32_t);
+    static void dataHandler(std::function<void(int)>, int, __uint32_t);
+
+
 
 public:
-    TcpServer(std::function<void(const TcpSocket&)>);
-    void start(int port);
+    TcpServer();
+    int addPort(int, std::function<void(int)>); //port, new data callback
+    void start();
     void stop();
 };
 

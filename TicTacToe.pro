@@ -25,7 +25,9 @@ SOURCES += main.cpp \
     library/HttpSocket.cpp \
     library/HttpResponse.cpp \
     Game.cpp \
-    TicTacToe.cpp
+    TicTacToe.cpp \
+    library/FdWrap.cpp \
+    library/EpollWrap.cpp
 
 HEADERS += \
     library/HttpServer.h \
@@ -35,7 +37,9 @@ HEADERS += \
     library/HttpSocket.h \
     library/HttpResponse.h \
     Game.h \
-    TicTacToe.h
+    TicTacToe.h \
+    library/FdWrap.h \
+    library/EpollWrap.h
 
 RESOURCES += \
     res/Resources.qrc

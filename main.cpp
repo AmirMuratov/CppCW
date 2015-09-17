@@ -22,7 +22,8 @@ int main() {
         perror ("sigaction");
         return 1;
     }
-    tic.start(5555);
+    tic.addPort(5555);
+    tic.start();
     return 0;
 }
 

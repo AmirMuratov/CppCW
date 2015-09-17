@@ -1,7 +1,6 @@
 #ifndef HTTPSERVER_H
 #define HTTPSERVER_H
 
-#include <QObject>
 #include <QString>
 #include "HttpResponse.h"
 #include "HttpSocket.h"
@@ -11,13 +10,15 @@
 
 class HttpServer {
     TcpServer tcpServer;
+    //QMap<int,
 
 public:
-    HttpServer(std::function<void(HttpRequest&, HttpSocket&)> callBack);
-    void start(u_int16_t port);
+    HttpServer();
+    void addPort(int, std::function<void(HttpRequest&, HttpSocket&)>);
+    void start();
     void stop();
 };
 
-void newRequest(std::function<void(HttpRequest&, HttpSocket&)> callBack, const TcpSocket& s);
+void newRequest(std::function<void(HttpRequest&, HttpSocket&)> callBack, int s);
 
 #endif // HTTPSERVER_H

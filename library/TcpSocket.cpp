@@ -18,6 +18,7 @@ int TcpSocket::read(std::string& string) const {
         int size;
         while (1) {
             size = ::read(fd, data, BUFFER_SIZE);
+            std::cout << size << std::endl;
             if (size == 0) {
                 return 0;
             } else if (size == -1) {
@@ -32,7 +33,6 @@ int TcpSocket::read(std::string& string) const {
                 string += std::string(data, size);
             }
         }
-        return 0;
     } else {
         printf("reading failed, socket error");
         return -1;
