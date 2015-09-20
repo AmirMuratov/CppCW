@@ -26,7 +26,6 @@ SOURCES += main.cpp \
     library/HttpResponse.cpp \
     Game.cpp \
     TicTacToe.cpp \
-    library/FdWrap.cpp \
     library/EpollWrap.cpp
 
 HEADERS += \
@@ -38,7 +37,6 @@ HEADERS += \
     library/HttpResponse.h \
     Game.h \
     TicTacToe.h \
-    library/FdWrap.h \
     library/EpollWrap.h
 
 RESOURCES += \

@@ -43,7 +43,7 @@ void HttpRequest::append(const QString& data) {
     }
 }
 
-bool HttpRequest::isValid() const{
+bool HttpRequest::isValid() const {
     return valid;
 }
 

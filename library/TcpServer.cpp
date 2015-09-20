@@ -34,7 +34,8 @@ int TcpServer::addPort(int port, std::function<void(TcpSocket*)> newData) {
 void TcpServer::connectionHandler(TcpServer* server, std::function<void(TcpSocket*)> newData, int fd, __uint32_t event) {
     if (event & EPOLLERR) {
         printf("error on TCPsocket\n");
-        //
+        server->epoll.remove(fd);
+        return;
     }
     if (event & EPOLLIN) {
         std::cout << "new connection" << std::endl;
@@ -54,15 +55,6 @@ void TcpServer::connectionHandler(TcpServer* server, std::function<void(TcpSocke
                     break;
                 }
             }
-
-            /*
-            char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-            int s = getnameinfo(&in_addr, in_len, hbuf, sizeof(hbuf), sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV);
-            if (s == 0) {
-                printf("Accepted connection on descriptor %d "
-                "(host=%s, port=%s)\n", infd, hbuf, sbuf);
-            }
-            */
 
             // Make the incoming socket non-blocking and add it to the epoll.
             if (makeSocketNonBlocking(infd) == -1) {

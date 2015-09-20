@@ -9,12 +9,9 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "FdWrap.h"
 #include "EpollWrap.h"
 class TcpServer;
 #include "TcpSocket.h"
-
-//typedef std::shared_ptr<FDWrap> fdptr;
 
 class TcpServer {
     int tcpfd;
