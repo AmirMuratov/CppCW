@@ -28,7 +28,7 @@ void HttpServer::newRequest(HttpServer* server, std::function<void(HttpRequest&,
     if (server->requests.count(socket) == 0) {
         server->requests[socket] = HttpRequest();
     }
-    std::cout << str.toStdString()<< std::endl;
+    //std::cout << str.toStdString()<< std::endl;
     server->requests[socket].append(str);
     if (server->requests[socket].isValid()) {
         std::cout << "new Request" << std::endl;

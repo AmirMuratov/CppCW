@@ -78,16 +78,6 @@ void TcpServer::dataHandler(TcpServer* server, std::function<void(TcpSocket*)> d
     if (event & EPOLLIN) {
         dataHandler(server->sockets[fd]);
     }
-    if (event & EPOLLOUT) {
-        //int res = server->sockets[fd]->flush();
-        //if (res == -1) {
-        //    server->epoll.remove(fd);
-        //    return;
-       // }
-        //if (res == 0) {
-            //server->epoll.modify()
-        //}
-    }
 }
 
 
@@ -130,6 +120,7 @@ int TcpServer::createAndBind(int port) {
             // We managed to bind successfully!
             break;
         }
+        close(sfd);
     }
     if (rp == NULL) {
         // No address succeeded

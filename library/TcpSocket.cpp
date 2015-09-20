@@ -1,28 +1,31 @@
 #include "TcpSocket.h"
 
 TcpSocket::TcpSocket(TcpServer* serv, int socket) {
+    std::cout << "Creating TCP socket: " << socket << std::endl;
     server = serv;
-    fd = socket;
+    infd = socket;
+    outfd = dup(socket);
+    buffersize = 0;
 }
 
 TcpSocket::~TcpSocket() {
+    std::cout << "Destructing socket: " << infd << std::endl;
     close();
 }
 
 void TcpSocket::close() {
-    std::cout << "closing tcp: " << fd << std::endl;
-    server->epoll.remove(fd);
-    if(server->sockets.count(fd) != 0) {
-        server->sockets.remove(fd);
-    }
-    ::close(fd);
+    std::cout << "closing tcp: " << infd << std::endl;
+    server->epoll.remove(infd);
+    server->epoll.remove(outfd);
+    ::close(infd);
+    ::close(outfd);
 }
 
 int TcpSocket::read(QString& str) {
     char data[BUFFER_SIZE];
     int size;
     while (1) {
-        size = ::read(fd, data, BUFFER_SIZE);
+        size = ::read(infd, data, BUFFER_SIZE);
         std::cout << size << std::endl;
         if (size == 0) {
             return 0;
@@ -42,58 +45,45 @@ int TcpSocket::read(QString& str) {
 }
 
 int TcpSocket::write(const char * data, size_t size) {
-    std::cout << "tcp writing" << std::endl;
-    if (fd > -1) {
-        int count;
-        unsigned int shift = 0;
-        do {
-            count = ::write(fd, data + shift, size - shift);
-            if (count == -1) {
-                if (errno != EAGAIN) {
-                    printf("writing failed: %s\n", strerror(errno));
-                    return -1;
-                }
-            } else {
-                shift += count;
-            }
-        } while (shift < size);
-        return 0;
-    } else {
-        printf("writing failed, socket error");
-        return -1;
-    }
-}
-
-/*int TcpSocket::write(const char * data, size_t size) {
     for (size_t i = 0; i < size; i++) {
         buffer[buffersize + i] = data[i];
     }
     buffersize += size;
-    return flush();
+    if (!server->epoll.isListening(outfd)) {
+        std::function<void(int, __uint32_t)> callBack = bind(TcpSocket::flush, this, std::placeholders::_1, std::placeholders::_2);
+        server->epoll.add(outfd, callBack, EPOLLOUT | EPOLLET | EPOLLRDHUP);
+    }
+    return 0;
 }
 
-int TcpSocket::flush() {
-    std::cout << "flushing " << buffersize << " bytes" << std::endl;
-    if (buffersize < 1000) {
-        std::cout << std::string(buffer, buffersize) << std::endl;
+void TcpSocket::flush(TcpSocket* socket, int fd, __uint32_t events) {
+    if ((events & EPOLLHUP) || (events & EPOLLERR)) {
+        //TODO
     }
-    int count = 0;
-    while (count != buffersize) {
-        int written = ::write(fd, buffer + count, buffersize - count);
-        if (written == -1) {
-            if (errno != EAGAIN) {
-                printf("writing failed: %s\n", strerror(errno));
-                return -1;
+    if (events & EPOLLOUT) {
+        std::cout << "flushing " << socket->buffersize << " bytes" << std::endl;
+        size_t count = 0;
+        while (count != socket->buffersize) {
+            int written = ::write(socket->outfd, socket->buffer + count, socket->buffersize - count);
+            if (written < 0) {
+                if (errno != EAGAIN) {
+                    printf("writing failed: %s\n", strerror(errno));
+                    //TODO
+                    return;
+                } else {
+                    break;
+                }
             } else {
-                break;
+                count += written;
             }
-        } else {
-           count += written;
         }
+        for (size_t i = count; i < socket->buffersize; i++) {
+            socket->buffer[i - count] = socket->buffer[i];
+        }
+        if (socket->buffersize == count) {
+            socket->server->epoll.remove(socket->outfd);
+        }
+        std::cout << count << " bytes flushed" << std::endl;
+        socket->buffersize -= count;
     }
-    for (int i = count; i < buffersize; i++) {
-        buffer[i - count] = buffer[i];
-    }
-    buffersize -= count;
-    return buffersize;
-}*/
+}

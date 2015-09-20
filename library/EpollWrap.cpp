@@ -68,7 +68,9 @@ int EpollWrap::add(int fd, std::function<void(int, __uint32_t)> callback, __uint
 
 int EpollWrap::remove(int fd) {
     std::cout << "removing from epoll: " << fd << std::endl;
-    callbacks.remove(fd);
+    if (callbacks.count(fd) != 0) {
+        callbacks.remove(fd);
+    }
     struct epoll_event event;
     if (epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, &event) == -1) {
         return -1;
@@ -76,15 +78,7 @@ int EpollWrap::remove(int fd) {
     return 0;
 }
 
-//TODO
-int EpollWrap::modify(int fd, __uint32_t events) {
-    std::cout << "removing: " << fd << std::endl;
-    callbacks.remove(fd);
-    struct epoll_event event;
-    event.events = events;
-    if (epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &event) == -1) {
-        return -1;
-    }
-    return 0;
+bool EpollWrap::isListening(int fd) {
+    return callbacks.count(fd) == 1;
 }
 

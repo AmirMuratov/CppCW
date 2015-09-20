@@ -7,7 +7,9 @@
 
 class HttpSocket {
     TcpSocket* tcp_socket;
-public:
+
+public:    
+
     HttpSocket(TcpSocket*);
     void write(const HttpResponse&);
 };
