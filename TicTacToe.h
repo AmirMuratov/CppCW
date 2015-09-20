@@ -21,7 +21,7 @@ private:
 
 public:
     TicTacToe();
-    void addPort(int);
+    int addPort(int);
     void start();
     void stop();
 };

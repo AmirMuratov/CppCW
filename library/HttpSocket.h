@@ -7,12 +7,11 @@
 #include <QString>
 
 class HttpSocket {
-    TcpSocket tcp_socket;
+    TcpSocket* tcp_socket;
 public:
-    HttpSocket(TcpSocket);
+    HttpSocket(TcpSocket*);
     void close();
-    void write(const HttpResponse&) const;
-    void read(HttpRequest&) const;
+    void write(const HttpResponse&);
 };
 
 #endif // HTTPSOCKET_H

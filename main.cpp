@@ -22,8 +22,9 @@ int main() {
         perror ("sigaction");
         return 1;
     }
-    tic.addPort(5555);
-    tic.start();
+    if (tic.addPort(5555) == 0) {
+        tic.start();
+    }
     return 0;
 }
 

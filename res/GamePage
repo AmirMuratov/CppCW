@@ -46,7 +46,7 @@ table#t01 {
 </script>  
 
 <script language="JavaScript">
-  addEventListener("click", function() {
+  addEventListener("click", function(event) {
     console.log(event.pageX + "  " + event.pageY);
     var xx = Math.floor((event.pageX - 9) / 25);
     var yy = Math.floor((event.pageY - 118) / 26);

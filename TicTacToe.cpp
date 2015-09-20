@@ -4,9 +4,14 @@
 TicTacToe::TicTacToe() {
 }
 
-void TicTacToe::addPort(int port) {
-    httpServer.addPort(port, request);
-    std::cout << "Port " << port << " added." << std::endl;
+int TicTacToe::addPort(int port) {
+    if (httpServer.addPort(port, request) != 0) {
+        std::cout << "Port " << port << " can't be added." << std::endl;
+        return -1;
+    } else {
+        std::cout << "Port " << port << " added." << std::endl;
+        return 0;
+    }
 }
 
 void TicTacToe::start() {
@@ -76,42 +81,42 @@ QString makeField(Game * g) {
     return result;
 }
 
-QString getCookie(HttpRequest& request) {
-    QString cookies = "";
+QStringList* getCookie(HttpRequest& request) {
     for (size_t i = 0; i < request.headers.size(); i++) {
-        if (request.headers[i].size() > 1 && request.headers[i].at(0) == "Cookie:") {
-            cookies.append(request.headers[i].at(1));
-            for (int j = 2; j < request.headers[i].size(); j++) {
-                cookies.append(" " + request.headers[i].at(j));
-            }
+        if (request.headers[i].at(0) == "Cookie:") {
+            return &request.headers[i];
         }
     }
-    return cookies == ""? nullptr : cookies;
+    return nullptr;
 }
 
 
 QString getName(HttpRequest& request) {
-    QString cookies = getCookie(request);
+    QStringList* cookies = getCookie(request);
     if (cookies == nullptr) {
         return nullptr;
     }
-    int p = cookies.indexOf("pass=", 0);
-    if (cookies.mid(0, 5) != "name=" || p == -1) {
+    if (!cookies->at(1).startsWith("name=")) {
         return nullptr;
     }
-    return cookies.mid(5, p - 6);
+    if (cookies->at(1).length() == 5) {
+        return "";
+    }
+    return cookies->at(1).mid(5);
 }
 
 QString getPass(HttpRequest& request) {
-    QString cookies = getCookie(request);
+    QStringList* cookies = getCookie(request);
     if (cookies == nullptr) {
         return nullptr;
     }
-    int p = cookies.indexOf("pass=", 0);
-    if (p == -1) {
+    if (!cookies->at(2).startsWith("pass=")) {
         return nullptr;
     }
-    return cookies.mid(p + 5);
+    if (cookies->at(2).length() == 5) {
+        return "";
+    }
+    return cookies->at(2).mid(5);
 }
 
 std::deque<QString> messages;
@@ -188,13 +193,18 @@ void makeMove(HttpRequest& http_request, HttpSocket& socket) {
     int y = data.mid(2, data.indexOf("&") - 2).toInt();
     int x = data.mid(data.indexOf("&") + 3).toInt();
     printf("%d + %d", x, y);
-    int num = activePlayers.value(name);
-    games[num];
-    int player = games[num].firstPlayer == name ? 1 : 2;
-    if (games[num].checkForWin() == 0 && player == games[num].checkMove()) {
-        games[num].makeMove(x, y);
+    if (activePlayers.count(name) != 0) {
+        int num = activePlayers.value(name);
+        games[num];
+        int player = games[num].firstPlayer == name ? 1 : 2;
+        if (games[num].checkForWin() == 0 && player == games[num].checkMove()) {
+            games[num].makeMove(x, y);
+        }
+        sendText(socket, "OK");
+    } else {
+        sendText(socket, "ERROR");
     }
-    sendText(socket, "OK");
+
 }
 
 void sendField(HttpRequest& http_request, HttpSocket& socket) {
@@ -209,11 +219,10 @@ void sendField(HttpRequest& http_request, HttpSocket& socket) {
 }
 
 void request(HttpRequest& http_request, HttpSocket& socket) {
-    std::cout << "start proceeding" << std::endl;
+    std::cout << "start processing" << std::endl;
     if (http_request.isValid() == 0) {
         socket.write(HttpResponse(400, "TicTacToe", "text/html", 0, ""));
     } else {
-        std::cout << "start 2proceeding" << std::endl;
         std::cout << http_request.uri.toStdString() << std::endl;
         if (http_request.uri == "/favicon.ico") sendIcon(socket);
         if (http_request.uri == "/jquery.js") sendJquery(socket);
@@ -222,7 +231,7 @@ void request(HttpRequest& http_request, HttpSocket& socket) {
         if (http_request.uri == "/makemove") makeMove(http_request, socket);
         if (http_request.uri.mid(0, 6) == "/field") sendField(http_request, socket);
     }
-    std::cout << "finish proceeding" << std::endl;
+    std::cout << "finish processing" << std::endl;
 }
 
 

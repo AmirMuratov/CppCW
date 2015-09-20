@@ -10,15 +10,16 @@
 
 class HttpServer {
     TcpServer tcpServer;
-    //QMap<int,
+    QMap<TcpSocket*, HttpRequest> requests;
+    static void newRequest(HttpServer*, std::function<void(HttpRequest&, HttpSocket&)>, TcpSocket*);
+
 
 public:
     HttpServer();
-    void addPort(int, std::function<void(HttpRequest&, HttpSocket&)>);
+    int addPort(int, std::function<void(HttpRequest&, HttpSocket&)>);
     void start();
     void stop();
 };
 
-void newRequest(std::function<void(HttpRequest&, HttpSocket&)> callBack, int s);
 
 #endif // HTTPSERVER_H

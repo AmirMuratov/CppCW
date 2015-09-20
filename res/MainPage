@@ -9,7 +9,9 @@
 
 <script language="JavaScript">
 function sendData() {
-	document.cookie = "name=" + document.name_and_pass.name.value + " pass=" + document.name_and_pass.password.value + ";";
+        var name = document.name_and_pass.name.value;
+        var pass = document.name_and_pass.password.value;
+        document.cookie = "name=" + name + " pass=" + pass + ";";
 	location.replace("/gamepage");
 }
 </script>

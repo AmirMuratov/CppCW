@@ -3,8 +3,8 @@
 HttpServer::HttpServer() {
 }
 
-void HttpServer::addPort(int port, std::function<void(HttpRequest&, HttpSocket&)> queryHandler) {
-    tcpServer.addPort(port, bind(newRequest, queryHandler, std::placeholders::_1));//TODO
+int HttpServer::addPort(int port, std::function<void(HttpRequest&, HttpSocket&)> queryHandler) {
+    return tcpServer.addPort(port, bind(newRequest, this, queryHandler, std::placeholders::_1));
 }
 
 void HttpServer::start() {
@@ -15,24 +15,21 @@ void HttpServer::stop() {
     tcpServer.stop();
 }
 
-void newRequest(std::function<void(HttpRequest&, HttpSocket&)> callBack,
-                int fd) {
-    std::string str;
-    TcpSocket s(fd);
-    int res = s.read(str);// 0 - read returned 0, -1 - error, 1 - EAGAIN
-    if (res < 0) {
-        s.close();
-        return;
+void HttpServer::newRequest(HttpServer* server, std::function<void(HttpRequest&, HttpSocket&)> callBack,
+                TcpSocket* socket) {
+    QString str;
+    int res = socket->read(str);// 0 - read returned 0, -1 - error, 1 - EAGAIN
+
+    if (server->requests.count(socket) == 0) {
+        server->requests[socket] = HttpRequest();
     }
-    if (str.length() == 0) {
-        return;
-    }
-    HttpSocket http_s(s);
-    HttpRequest req(QString::fromStdString(str));
-    callBack(req, http_s);
-    if (res == 0) {
-        //read returned 0
-        s.close();
+    std::cout << str .toStdString()<< std::endl;
+    server->requests[socket].append(str);
+    if (server->requests[socket].isValid()) {
+        std::cout << "new Request" << std::endl;
+        HttpSocket http_s(socket);
+        callBack(server->requests[socket], http_s);
+        server->requests.remove(socket);
     }
 }
 

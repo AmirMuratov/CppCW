@@ -8,17 +8,18 @@
 
 class HttpRequest{
 public:
+    QString requestString;
     bool valid;
     QString method;
     QString version;
     QString uri;
-    std::vector<QStringList> headers;
     QString data;
+    std::vector<QStringList> headers;
+    int build();
 
     HttpRequest();
-    HttpRequest(const QString&);
+    void append(const QString&);
     bool isValid() const;
-    void clear();
     const std::string& toString() const;
 };
 
