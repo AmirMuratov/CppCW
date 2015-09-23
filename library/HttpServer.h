@@ -11,7 +11,7 @@
 class HttpServer {
     TcpServer tcpServer;
     QMap<TcpSocket*, HttpRequest> requests;
-    static void newRequest(HttpServer*, std::function<void(HttpRequest&, HttpSocket&)>, TcpSocket*);
+    static void newRequest(HttpServer*, std::function<void(HttpRequest&, HttpSocket&)>, TcpSocket*, EventType);
 
 
 public:

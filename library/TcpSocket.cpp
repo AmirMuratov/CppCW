@@ -3,29 +3,30 @@
 TcpSocket::TcpSocket(TcpServer* serv, int socket) {
     std::cout << "Creating TCP socket: " << socket << std::endl;
     server = serv;
-    infd = socket;
-    outfd = dup(socket);
+    fd = socket;
     buffersize = 0;
+    closed = false;
 }
 
 TcpSocket::~TcpSocket() {
-    std::cout << "Destructing socket: " << infd << std::endl;
+    std::cout << "Destructing socket: " << fd << std::endl;
     close();
 }
 
 void TcpSocket::close() {
-    std::cout << "closing tcp: " << infd << std::endl;
-    server->epoll.remove(infd);
-    server->epoll.remove(outfd);
-    ::close(infd);
-    ::close(outfd);
+    if (!closed) {
+        std::cout << "closing tcp: " << fd << std::endl;
+        server->epoll.remove(fd);
+        ::close(fd);
+        closed = true;
+    }
 }
 
 int TcpSocket::read(QString& str) {
     char data[BUFFER_SIZE];
     int size;
     while (1) {
-        size = ::read(infd, data, BUFFER_SIZE);
+        size = ::read(fd, data, BUFFER_SIZE);
         std::cout << size << std::endl;
         if (size == 0) {
             return 0;
@@ -38,7 +39,7 @@ int TcpSocket::read(QString& str) {
                 return 1;
             }
         } else {
-            data[size] = '\0';
+            data[size] = 0;
             str.append(data);
         }
     }
@@ -49,25 +50,18 @@ int TcpSocket::write(const char * data, size_t size) {
         buffer[buffersize + i] = data[i];
     }
     buffersize += size;
-    if (!server->epoll.isListening(outfd)) {
-        std::function<void(int, __uint32_t)> callBack = bind(TcpSocket::flush, this, std::placeholders::_1, std::placeholders::_2);
-        server->epoll.add(outfd, callBack, EPOLLOUT | EPOLLET | EPOLLRDHUP);
-    }
+    server->epoll.modify(fd, EPOLLOUT | EPOLLIN | EPOLLET | EPOLLRDHUP);
     return 0;
 }
 
-void TcpSocket::flush(TcpSocket* socket, int fd, __uint32_t events) {
-    if ((events & EPOLLHUP) || (events & EPOLLERR)) {
-        //TODO
-    }
-    if (events & EPOLLOUT) {
-        std::cout << "flushing " << socket->buffersize << " bytes" << std::endl;
+void TcpSocket::flush() {
+       std::cout << "flushing " << buffersize << " bytes" << std::endl;
         size_t count = 0;
-        while (count != socket->buffersize) {
-            int written = ::write(socket->outfd, socket->buffer + count, socket->buffersize - count);
+        while (count != buffersize) {
+            int written = ::write(fd, buffer + count, buffersize - count);
             if (written < 0) {
                 if (errno != EAGAIN) {
-                    printf("writing failed: %s\n", strerror(errno));
+                    std::cout << "writing failed: %s\n" << std::endl;
                     //TODO
                     return;
                 } else {
@@ -77,13 +71,12 @@ void TcpSocket::flush(TcpSocket* socket, int fd, __uint32_t events) {
                 count += written;
             }
         }
-        for (size_t i = count; i < socket->buffersize; i++) {
-            socket->buffer[i - count] = socket->buffer[i];
+        for (size_t i = count; i < buffersize; i++) {
+            buffer[i - count] = buffer[i];
         }
-        if (socket->buffersize == count) {
-            socket->server->epoll.remove(socket->outfd);
+        if (buffersize == count) {
+            server->epoll.modify(fd, EPOLLIN | EPOLLET | EPOLLRDHUP);
         }
         std::cout << count << " bytes flushed" << std::endl;
-        socket->buffersize -= count;
-    }
+        buffersize -= count;
 }

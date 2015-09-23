@@ -22,6 +22,7 @@ public:
     int add(int, std::function<void(int, __uint32_t)>, __uint32_t); //file descriptor to add, function to call when event
                                                                     //happens(gets fd and events), and events.
     int remove(int);
+    int modify(int, __uint32_t);
     bool isListening(int);
 };
 

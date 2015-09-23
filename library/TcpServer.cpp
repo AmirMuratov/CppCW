@@ -9,7 +9,7 @@ TcpServer::TcpServer() {
     std::cout << "Creating TCP server." << std::endl;
 }
 
-int TcpServer::addPort(int port, std::function<void(TcpSocket*)> newData) {
+int TcpServer::addPort(int port, std::function<void(TcpSocket*, EventType)> newData) {
     std::cout << "adding tcp port: " << port << std::endl;
     int tcpfd = createAndBind(port);
     if (tcpfd == -1) {
@@ -31,7 +31,7 @@ int TcpServer::addPort(int port, std::function<void(TcpSocket*)> newData) {
     return 0;
 }
 
-void TcpServer::connectionHandler(TcpServer* server, std::function<void(TcpSocket*)> newData, int fd, __uint32_t event) {
+void TcpServer::connectionHandler(TcpServer* server, std::function<void(TcpSocket*, EventType)> newData, int fd, __uint32_t event) {
     if (event & EPOLLERR) {
         printf("error on TCPsocket\n");
         server->epoll.remove(fd);
@@ -69,14 +69,22 @@ void TcpServer::connectionHandler(TcpServer* server, std::function<void(TcpSocke
     }
 }
 
-void TcpServer::dataHandler(TcpServer* server, std::function<void(TcpSocket*)> dataHandler, int fd, __uint32_t event) {
-    if ((event & EPOLLRDHUP) || (event & EPOLLERR)) {
+void TcpServer::dataHandler(TcpServer* server, std::function<void(TcpSocket*, EventType)> dataHandler, int fd, __uint32_t event) {
+    if (event & EPOLLRDHUP) {
+        dataHandler(server->sockets[fd], HUP);
         delete server->sockets[fd];
-        server->sockets.remove(fd);
+        return;
+    }
+    if (event & EPOLLERR) {
+        dataHandler(server->sockets[fd], ERROR);
+        delete server->sockets[fd];
         return;
     }
     if (event & EPOLLIN) {
-        dataHandler(server->sockets[fd]);
+        dataHandler(server->sockets[fd], NEWDATA);
+    }
+    if (event & EPOLLOUT) {
+        server->sockets[fd]->flush();
     }
 }
 

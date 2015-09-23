@@ -10,22 +10,23 @@ class TcpSocket;
 #include "TcpServer.h"
 
 class TcpSocket {
-    static const int BUFFER_SIZE = 5000000;
-    int infd;
-    int outfd;
+    static const int BUFFER_SIZE = 100000;
+    int fd;
     TcpServer* server;
-
-public:
-
     size_t buffersize;
     char buffer[BUFFER_SIZE];
+    bool closed;
+
+public:
 
     TcpSocket(TcpServer*, int);
     ~TcpSocket();
     void close();
     int read(QString&);
     int write(const char * data, size_t size);
-    static void flush(TcpSocket*, int, __uint32_t);
+    void flush();
+
+    friend class TcpServer;
 };
 
 #endif // TCPSOCKET_H
