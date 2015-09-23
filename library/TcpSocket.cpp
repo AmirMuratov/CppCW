@@ -62,7 +62,6 @@ void TcpSocket::flush() {
             if (written < 0) {
                 if (errno != EAGAIN) {
                     std::cout << "writing failed: %s\n" << std::endl;
-                    //TODO
                     return;
                 } else {
                     break;
