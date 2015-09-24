@@ -21,8 +21,8 @@ class TcpServer {
     QMap<int, TcpSocket*> sockets;
     static int makeSocketNonBlocking(int);
     static int createAndBind(int);//gets port, returns fd
-    static void connectionHandler(TcpServer*, std::function<void(TcpSocket*, EventType)>, int, __uint32_t);
-    static void dataHandler(TcpServer*, std::function<void(TcpSocket*, EventType)>, int, __uint32_t);
+    void connectionHandler(std::function<void(TcpSocket*, EventType)>, int, __uint32_t);
+    void dataHandler(std::function<void(TcpSocket*, EventType)>, int, __uint32_t);
 
 public:
     TcpServer();

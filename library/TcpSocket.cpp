@@ -15,8 +15,7 @@ TcpSocket::~TcpSocket() {
 
 void TcpSocket::close() {
     if (!closed) {
-        std::cout << "closing tcp: " << fd << std::endl;
-        server->epoll.remove(fd);
+        std::cout << "closing tcp socket: " << fd << std::endl;
         ::close(fd);
         closed = true;
     }

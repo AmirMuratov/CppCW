@@ -1,5 +1,7 @@
 #include "EpollWrap.h"
 
+#define MAX_EVENTS 50
+
 EpollWrap::EpollWrap() {
     epollfd = epoll_create1(0);
     if (epollfd == -1) {
@@ -35,7 +37,7 @@ void EpollWrap::startListening() {
             if (events[i].events & EPOLLRDHUP) {
                 std::cout << "EPOLLRDHUP" << std::endl;
             }
-            callbacks[events[i].data.fd](events[i].data.fd, events[i].events);
+            callbacks[events[i].data.fd](events[i].events);
         }
         std::cout << "==============================" << std::endl;
     }
@@ -49,14 +51,15 @@ EpollWrap::~EpollWrap() {
     std::cout << "Deleting epoll wrap " << epollfd << std::endl;
     for (auto i = callbacks.begin(); i != callbacks.end(); i++) {
         std::cout << "closing " << i.key() << " descriptor." << std::endl;
-        close(i.key());
+        //i.value()(i.key(), EPOLLERR);
+        //close(i.key());
     }
     if (epollfd != -1) {
         close(epollfd);
     }
 }
 
-int EpollWrap::add(int fd, std::function<void(int, __uint32_t)> callback, __uint32_t events) {
+int EpollWrap::add(int fd, std::function<void(__uint32_t)> callback, __uint32_t events) {
     std::cout << "Added " << fd << " descriptor to epoll." << std::endl;
     struct epoll_event event;
     memset(&event, 0, sizeof(epoll_event));

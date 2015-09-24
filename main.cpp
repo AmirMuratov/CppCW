@@ -4,8 +4,7 @@
 
 TicTacToe tic;
 
-static void handler (int sig, siginfo_t *siginfo, void *context)
-{
+static void handler (int sig, siginfo_t *siginfo, void *context) {
     printf("Signal number: %d\n", sig);
     tic.stop();
 }

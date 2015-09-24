@@ -6,11 +6,9 @@
 #include "library/HttpSocket.h"
 #include "library/HttpServer.h"
 #include "Game.h"
-#include <QObject>
+#include <iostream>
+#include <fstream>
 #include <QFile>
-#include <deque>
-#include <QUrl>
-#include <vector>
 #include <QMap>
 #include <set>
 #include <algorithm>

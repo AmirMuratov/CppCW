@@ -119,7 +119,6 @@ QString getPass(HttpRequest& request) {
     return cookies->at(2).mid(5);
 }
 
-std::deque<QString> messages;
 std::vector<Game> games;
 QMap<QString, int> activePlayers;
 QMap<QString, QString> waitingPlayers;

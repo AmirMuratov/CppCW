@@ -1,9 +1,6 @@
 #include "TcpServer.h"
 
 #define QUEUE_SIZE 10
-#define MAX_EVENTS 50
-#define BUFFER_SIZE 10
-
 
 TcpServer::TcpServer() {
     std::cout << "Creating TCP server." << std::endl;
@@ -25,16 +22,20 @@ int TcpServer::addPort(int port, std::function<void(TcpSocket*, EventType)> newD
         return -1;
     }
     std::cout << "Adding port " << port << " to epoll" << std::endl;
-    std::function<void(int, __uint32_t)> handlerFunction = bind(TcpServer::connectionHandler, this, newData, std::placeholders::_1, std::placeholders::_2);
+    std::function<void(__uint32_t)> handlerFunction = bind(&TcpServer::connectionHandler, this, newData, tcpfd, std::placeholders::_1);
     epoll.add(tcpfd, handlerFunction, EPOLLIN | EPOLLET);
     std::cout << "Added port " << port << " to epoll" << std::endl;
     return 0;
 }
 
-void TcpServer::connectionHandler(TcpServer* server, std::function<void(TcpSocket*, EventType)> newData, int fd, __uint32_t event) {
+
+void TcpServer::connectionHandler(std::function<void(TcpSocket*, EventType)> newData, int fd, __uint32_t event) {
+    if (event & EPOLLRDHUP) {
+        close(fd);
+        return;
+    }
     if (event & EPOLLERR) {
         printf("error on TCPsocket\n");
-        server->epoll.remove(fd);
         return;
     }
     if (event & EPOLLIN) {
@@ -62,29 +63,33 @@ void TcpServer::connectionHandler(TcpServer* server, std::function<void(TcpSocke
                 close(infd);
                 continue;
             }
-            std::function<void(int, __uint32_t)> handlerFunction = bind(TcpServer::dataHandler, server, newData, std::placeholders::_1, std::placeholders::_2);
-            server->sockets[infd] = new TcpSocket(server, infd);
-            server->epoll.add(infd, handlerFunction, EPOLLIN | EPOLLET | EPOLLRDHUP);
+            std::function<void(__uint32_t)> handlerFunction = bind(&TcpServer::dataHandler, this, newData, infd, std::placeholders::_1);
+            sockets[infd] = new TcpSocket(this, infd);
+            epoll.add(infd, handlerFunction, EPOLLIN | EPOLLET | EPOLLRDHUP);
         }
     }
 }
 
-void TcpServer::dataHandler(TcpServer* server, std::function<void(TcpSocket*, EventType)> dataHandler, int fd, __uint32_t event) {
+void TcpServer::dataHandler(std::function<void(TcpSocket*, EventType)> dataHandler, int fd, __uint32_t event) {
     if (event & EPOLLRDHUP) {
-        dataHandler(server->sockets[fd], HUP);
-        delete server->sockets[fd];
+        dataHandler(sockets[fd], HUP);
+        delete sockets[fd];
+        epoll.remove(fd);
+        sockets.remove(fd);
         return;
     }
     if (event & EPOLLERR) {
-        dataHandler(server->sockets[fd], ERROR);
-        delete server->sockets[fd];
+        dataHandler(sockets[fd], ERROR);
+        delete sockets[fd];
+        epoll.remove(fd);
+        sockets.remove(fd);
         return;
     }
     if (event & EPOLLIN) {
-        dataHandler(server->sockets[fd], NEWDATA);
+        dataHandler(sockets[fd], NEWDATA);
     }
     if (event & EPOLLOUT) {
-        server->sockets[fd]->flush();
+        sockets[fd]->flush();
     }
 }
 
