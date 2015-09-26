@@ -49,8 +49,10 @@ void EpollWrap::stopListening() {
 
 EpollWrap::~EpollWrap() {
     std::cout << "Deleting epoll wrap " << epollfd << std::endl;
-    for (auto i = callbacks.begin(); i != callbacks.end(); i++) {
+    QMap<int, std::function<void(__uint32_t)>> temp = callbacks;
+    for (auto i = temp.begin(); i != temp.end(); i++) {
         std::cout << "closing " << i.key() << " descriptor." << std::endl;
+        i.value()(EPOLLRDHUP);
     }
     if (epollfd != -1) {
         close(epollfd);

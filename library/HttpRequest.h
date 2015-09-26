@@ -6,7 +6,7 @@
 #include <QTextStream>
 #include <iostream>
 
-class HttpRequest{
+class HttpRequest {
 public:
     QString requestString;
     bool valid;

@@ -38,11 +38,12 @@ int TcpServer::addPort(int port, std::function<void(TcpSocket*, EventType)> newD
 
 void TcpServer::connectionHandler(std::function<void(TcpSocket*, EventType)> newData, int fd, __uint32_t event) {
     if (event & EPOLLRDHUP) {
-        close(fd);
+        epoll.remove(fd);
         return;
     }
     if (event & EPOLLERR) {
         printf("error on TCPsocket\n");
+        epoll.remove(fd);
         return;
     }
     if (event & EPOLLIN) {

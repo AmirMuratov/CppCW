@@ -6,8 +6,7 @@
 #include <sys/epoll.h>
 #include <iostream>
 
-class EpollWrap
-{
+class EpollWrap {
     int const MAX_EVENTS = 50;
     bool running;
     int epollfd;

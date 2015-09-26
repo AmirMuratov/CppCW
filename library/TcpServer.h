@@ -19,8 +19,8 @@ typedef std::shared_ptr<TcpSocket> sockptr;
 
 class TcpServer {
     int tcpfd;
-    EpollWrap epoll;
     QMap<int, sockptr> sockets;
+    EpollWrap epoll;
     std::vector<int> tcpsockets;
     static int makeSocketNonBlocking(int);
     static int createAndBind(int);//gets port, returns fd

@@ -16,8 +16,8 @@ HttpResponse::HttpResponse(const int status, const char * server_name, const cha
     response.append("Content-Length: ");
     response.append(QString::number(content_length));
     response.append("\n");
-    //response.append("Connection: keep-alive\n");
-    response.append("Connection: close\n");
+    response.append("Connection: keep-alive\n");
+    //response.append("Connection: close\n");
     response.append("\n");
 
     if (status == 400) {
