@@ -21,6 +21,7 @@ int main() {
         perror ("sigaction");
         return 1;
     }
+
     if (tic.addPort(5555) == 0) {
         tic.start();
     }

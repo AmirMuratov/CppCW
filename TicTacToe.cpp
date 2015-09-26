@@ -5,7 +5,7 @@ TicTacToe::TicTacToe() {
 }
 
 int TicTacToe::addPort(int port) {
-    if (httpServer.addPort(port, request) != 0) {
+    if (httpServer.addPort(port, bind(&TicTacToe::request, this, std::placeholders::_1, std::placeholders::_2)) != 0) {
         std::cout << "Port " << port << " can't be added." << std::endl;
         return -1;
     } else {
@@ -119,10 +119,6 @@ QString getPass(HttpRequest& request) {
     return cookies->at(2).mid(5);
 }
 
-std::vector<Game> games;
-QMap<QString, int> activePlayers;
-QMap<QString, QString> waitingPlayers;
-
 void sendIcon(HttpSocket& socket) {
     QByteArray icon(readBinFile(":/html/favicon.ico"));
     socket.write(HttpResponse(200, "TicTacToe", "image/x-icon", icon.size(), icon.data()));
@@ -152,7 +148,7 @@ void sendText(HttpSocket& socket, const std::string& text) {
     socket.write(HttpResponse(200, "TicTacToe", "text/plain", text.size(), text.data()));
 }
 
-void gamepageRequest(HttpRequest& http_request, HttpSocket& socket) {
+void TicTacToe::gamepageRequest(HttpRequest& http_request, HttpSocket& socket) {
     QString name = getName(http_request);
     QString pass = getPass(http_request);
     if (name == nullptr || pass == nullptr) {
@@ -183,7 +179,7 @@ void gamepageRequest(HttpRequest& http_request, HttpSocket& socket) {
     }
 }
 
-void makeMove(HttpRequest& http_request, HttpSocket& socket) {
+void TicTacToe::makeMove(HttpRequest& http_request, HttpSocket& socket) {
     QString name = getName(http_request);
     if (name == nullptr) {
         sendText(socket, "ERROR");
@@ -206,7 +202,7 @@ void makeMove(HttpRequest& http_request, HttpSocket& socket) {
 
 }
 
-void sendField(HttpRequest& http_request, HttpSocket& socket) {
+void TicTacToe::sendField(HttpRequest& http_request, HttpSocket& socket) {
     QString name = getName(http_request);
     if (name == nullptr || activePlayers.count(name) == 0) {
         sendText(socket, "ERROR");
@@ -217,7 +213,7 @@ void sendField(HttpRequest& http_request, HttpSocket& socket) {
     sendText(socket, response.toStdString());
 }
 
-void request(HttpRequest& http_request, HttpSocket& socket) {
+void TicTacToe::request(HttpRequest& http_request, HttpSocket& socket) {
     std::cout << "start processing" << std::endl;
     if (http_request.isValid() == 0) {
         socket.write(HttpResponse(400, "TicTacToe", "text/html", 0, ""));

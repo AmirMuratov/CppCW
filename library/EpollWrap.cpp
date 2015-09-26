@@ -51,8 +51,6 @@ EpollWrap::~EpollWrap() {
     std::cout << "Deleting epoll wrap " << epollfd << std::endl;
     for (auto i = callbacks.begin(); i != callbacks.end(); i++) {
         std::cout << "closing " << i.key() << " descriptor." << std::endl;
-        //i.value()(i.key(), EPOLLERR);
-        //close(i.key());
     }
     if (epollfd != -1) {
         close(epollfd);

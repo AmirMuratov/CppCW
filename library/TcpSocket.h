@@ -6,8 +6,11 @@
 #include <unistd.h>
 #include <iostream>
 #include <QString>
+#include <memory>
 class TcpSocket;
 #include "TcpServer.h"
+
+typedef std::shared_ptr<TcpSocket> sockptr;
 
 class TcpSocket {
     static const int BUFFER_SIZE = 100000;

@@ -6,6 +6,12 @@ TcpServer::TcpServer() {
     std::cout << "Creating TCP server." << std::endl;
 }
 
+TcpServer::~TcpServer() {
+    for (int fd : tcpsockets) {
+        close(fd);
+    }
+}
+
 int TcpServer::addPort(int port, std::function<void(TcpSocket*, EventType)> newData) {
     std::cout << "adding tcp port: " << port << std::endl;
     int tcpfd = createAndBind(port);
@@ -23,7 +29,8 @@ int TcpServer::addPort(int port, std::function<void(TcpSocket*, EventType)> newD
     }
     std::cout << "Adding port " << port << " to epoll" << std::endl;
     std::function<void(__uint32_t)> handlerFunction = bind(&TcpServer::connectionHandler, this, newData, tcpfd, std::placeholders::_1);
-    epoll.add(tcpfd, handlerFunction, EPOLLIN | EPOLLET);
+    epoll.add(tcpfd, handlerFunction, EPOLLIN | EPOLLET | EPOLLRDHUP);
+    tcpsockets.push_back(tcpfd);
     std::cout << "Added port " << port << " to epoll" << std::endl;
     return 0;
 }
@@ -64,7 +71,7 @@ void TcpServer::connectionHandler(std::function<void(TcpSocket*, EventType)> new
                 continue;
             }
             std::function<void(__uint32_t)> handlerFunction = bind(&TcpServer::dataHandler, this, newData, infd, std::placeholders::_1);
-            sockets[infd] = new TcpSocket(this, infd);
+            sockets[infd] = sockptr(new TcpSocket(this, infd));
             epoll.add(infd, handlerFunction, EPOLLIN | EPOLLET | EPOLLRDHUP);
         }
     }
@@ -72,21 +79,19 @@ void TcpServer::connectionHandler(std::function<void(TcpSocket*, EventType)> new
 
 void TcpServer::dataHandler(std::function<void(TcpSocket*, EventType)> dataHandler, int fd, __uint32_t event) {
     if (event & EPOLLRDHUP) {
-        dataHandler(sockets[fd], HUP);
-        delete sockets[fd];
+        dataHandler(&*sockets[fd], HUP);
         epoll.remove(fd);
         sockets.remove(fd);
         return;
     }
     if (event & EPOLLERR) {
-        dataHandler(sockets[fd], ERROR);
-        delete sockets[fd];
+        dataHandler(&*sockets[fd], ERROR);
         epoll.remove(fd);
         sockets.remove(fd);
         return;
     }
     if (event & EPOLLIN) {
-        dataHandler(sockets[fd], NEWDATA);
+        dataHandler(&*sockets[fd], NEWDATA);
     }
     if (event & EPOLLOUT) {
         sockets[fd]->flush();

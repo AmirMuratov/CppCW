@@ -16,6 +16,13 @@
 class TicTacToe {
 private:
     HttpServer httpServer;
+    std::vector<Game> games;
+    QMap<QString, int> activePlayers;
+    QMap<QString, QString> waitingPlayers;
+    void gamepageRequest(HttpRequest&, HttpSocket&);
+    void makeMove(HttpRequest&, HttpSocket&);
+    void sendField(HttpRequest&, HttpSocket&);
+    void request(HttpRequest&, HttpSocket&);
 
 public:
     TicTacToe();
