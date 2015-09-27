@@ -5,7 +5,7 @@
 TicTacToe tic;
 
 static void handler (int sig, siginfo_t *siginfo, void *context) {
-    printf("Signal number: %d\n", sig);
+    std::cout << "Signal number: " << sig << std::endl;
     tic.stop();
 }
 
@@ -18,8 +18,8 @@ int main() {
         sigaction(SIGINT, &act, NULL) < 0 ||
         sigaction(SIGQUIT, &act, NULL) < 0 ||
         sigaction(SIGTERM, &act, NULL) < 0) {
-        perror ("sigaction");
-        return 1;
+        std::cout << "Can't replace signals." << std::endl;
+        return -1;
     }
 
     if (tic.addPort(5555) == 0) {
@@ -27,5 +27,3 @@ int main() {
     }
     return 0;
 }
-
-

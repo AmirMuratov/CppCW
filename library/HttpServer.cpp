@@ -42,9 +42,7 @@ void HttpServer::newRequest(std::function<void(HttpRequest&, HttpSocket&)> callB
             requests.remove(socket);
         }
         if (res == 0) {
-            if (requests.count(socket) != 0) {
-                requests.remove(socket);
-            }
+            requests.remove(socket);
         }
     }
 }

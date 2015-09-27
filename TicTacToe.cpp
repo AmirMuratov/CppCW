@@ -1,4 +1,4 @@
-    #include "TicTacToe.h"
+#include "TicTacToe.h"
 #include "Game.h"
 
 TicTacToe::TicTacToe() {
@@ -32,9 +32,10 @@ QString readFile(const QString &filename) {
     QByteArray total;
     QByteArray line;
     while (!file.atEnd()) {
-        line = file.read(1024);
+        line = file.read(65536);
         total.append(line);
     }
+    file.close();
     return QString(total);
 }
 
@@ -45,9 +46,10 @@ QByteArray readBinFile(const QString &filename) {
     QByteArray total;
     QByteArray line;
     while (!file.atEnd()) {
-        line = file.read(1024);
+        line = file.read(65536);
         total.append(line);
     }
+    file.close();
     return total;
 }
 

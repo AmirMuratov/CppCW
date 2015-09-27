@@ -45,6 +45,9 @@ int TcpSocket::read(QString& str) {
 }
 
 int TcpSocket::write(const char * data, size_t size) {
+    if (buffersize + size > BUFFER_SIZE) {
+        return -1;
+    }
     for (size_t i = 0; i < size; i++) {
         buffer[buffersize + i] = data[i];
     }
