@@ -9,8 +9,8 @@
 #include <QTextStream>
 
 class HttpServer {
-    TcpServer tcpServer;
     QMap<TcpSocket*, HttpRequest> requests;
+    TcpServer tcpServer;
     void newRequest(std::function<void(HttpRequest&, HttpSocket&)>, TcpSocket*, EventType);
 
 

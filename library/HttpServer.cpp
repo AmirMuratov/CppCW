@@ -18,9 +18,7 @@ void HttpServer::stop() {
 void HttpServer::newRequest(std::function<void(HttpRequest&, HttpSocket&)> callBack,
                 TcpSocket* socket, EventType type) {
     if (type == ERROR || type == HUP) {
-        if (requests.count(socket) != 0) {
-            requests.remove(socket);
-        }
+        requests.remove(socket);
         return;
     }
     if (type == NEWDATA) {
