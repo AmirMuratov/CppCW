@@ -1,7 +1,5 @@
 #include "TcpServer.h"
 
-#define QUEUE_SIZE 10
-
 TcpServer::TcpServer() {
     std::cout << "Creating TCP server." << std::endl;
 }

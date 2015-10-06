@@ -18,6 +18,7 @@ enum EventType {NEWDATA, ERROR, HUP};
 typedef std::shared_ptr<TcpSocket> sockptr;
 
 class TcpServer {
+    static const int QUEUE_SIZE = 10;
     int tcpfd;
     QMap<int, sockptr> sockets;
     EpollWrap epoll;

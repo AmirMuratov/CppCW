@@ -1,7 +1,5 @@
 #include "EpollWrap.h"
 
-#define MAX_EVENTS 50
-
 EpollWrap::EpollWrap() {
     epollfd = epoll_create1(0);
     if (epollfd == -1) {
